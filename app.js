@@ -20,7 +20,6 @@ process.on("uncaughtException", (err) => {
 });
 
 // ! import middleware app
-
 app.use((req, res, next) => {
   if (req.originalUrl.startsWith("/api/v1/order/stripe/webhook")) {
     bodyParser.raw({ type: "application/json" })(req, res, next);

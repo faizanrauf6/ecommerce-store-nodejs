@@ -2,6 +2,7 @@ const multer = require("multer");
 const multerS3 = require("multer-s3");
 const { S3Client } = require("@aws-sdk/client-s3");
 const dotenv = require("dotenv");
+const { generateUniqueFileName } = require("../helpers/generateUniqueFileName");
 dotenv.config({ path: `config/config.env` });
 
 // Configure AWS
@@ -12,15 +13,6 @@ const s3Client = new S3Client({
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
   },
 });
-
-const generateUniqueFileName = (file) => {
-  const originalName = file.originalname;
-  const timestamp = Date.now();
-  const randomString = Math.random().toString(36).substring(2, 15); // Generates a random string
-
-  // Combine the original filename, timestamp, and random string to create a unique name
-  return `${originalName}-${timestamp}-${randomString}`;
-};
 
 // for folders
 const storage = (folder = "general") => {
