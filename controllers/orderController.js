@@ -4,6 +4,7 @@ const OrderModel = require("../models/order");
 const ProductModel = require("../models/product");
 const dotenv = require("dotenv");
 const PaymentSession = require("../models/payment");
+const consoleLogger = require("../config/logging");
 dotenv.config();
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
@@ -27,7 +28,6 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
   */
 
   const { products, address, phone } = req.body;
-  console.log(req.originalUrl);
   const userId = req.user._id;
 
   // ! Check validation
@@ -38,7 +38,6 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
   let allProducts = await ProductModel.find({
     _id: { $in: products.map((product) => product.product) },
   });
-  //   console.log(allProducts);
 
   // ! Check if products exists
   if (allProducts.length !== products.length) {
@@ -78,7 +77,7 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
       };
     }),
   });
-  console.log(session);
+
   // ! Create Order Session
   await PaymentSession.create({
     user: req.user._id,
@@ -103,7 +102,6 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
 });
 
 async function handlePaymentSuccess(session) {
-  console.log(session);
   // Update PaymentSession for a successful payment
   const paymentSession = await PaymentSession.findOneAndUpdate(
     { session: session.id },
@@ -113,7 +111,7 @@ async function handlePaymentSuccess(session) {
     },
     { new: true }
   );
-  console.log(paymentSession);
+
   // Get All products and update their stock
   const allProducts = await ProductModel.find({
     _id: { $in: paymentSession.products.map((product) => product.product) },
@@ -125,8 +123,8 @@ async function handlePaymentSuccess(session) {
     product.stock -= foundProduct.quantity;
     await product.save();
   });
+
   // Create an order in your database here
-  console.log({ paymentSession, session });
   const order = new OrderModel({
     user: paymentSession.user, // Use the user ID from the payment session
     products: paymentSession.products, // Use the products from the payment session
@@ -142,7 +140,6 @@ async function handlePaymentSuccess(session) {
 
 async function handlePaymentFailure(session) {
   // Update PaymentSession for a failed payment
-  console.log(session);
   await PaymentSession.findOneAndUpdate(
     { session: session.id },
     {
@@ -165,14 +162,11 @@ exports.stripeWebhook = catchAsyncErrors(async (req, res, next) => {
       signature,
       process.env.STRIPE_WEBHOOK_SECRET
     );
-    console.log("Received Stripe event:", event.type);
   } catch (err) {
-    console.log(err);
     return next(new ErrorHandler(err.message, 400));
   }
 
   // Handle specific Stripe events
-  console.log(event.type);
   switch (event.type) {
     case "checkout.session.completed":
       handlePaymentSuccess(event.data.object);
@@ -183,7 +177,7 @@ exports.stripeWebhook = catchAsyncErrors(async (req, res, next) => {
       break;
     case "payment_intent.payment_failed":
       // Payment failed
-      console.log("Payment failed", event.data.object);
+      consoleLogger.info("Payment failed", event.data.object);
       break;
     default:
     // Handle other events or ignore them

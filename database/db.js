@@ -1,4 +1,7 @@
 const mongoose = require("mongoose");
+const consoleLogger = require("../config/logging");
+
+// ! starting the DataBase
 const dataBaseConnect = function () {
   const URI = process.env.DB_URL;
   mongoose
@@ -7,7 +10,7 @@ const dataBaseConnect = function () {
       // useUnifiedTopology: true
     })
     .then(() => {
-      console.log("Connected to MongoDB Atlas");
+      consoleLogger.info("Connected to MongoDB Atlas");
     });
 };
 

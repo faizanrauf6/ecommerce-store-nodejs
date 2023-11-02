@@ -1,8 +1,10 @@
+const { sendResponse } = require("../helpers/response");
 const ErrorHandler = require("../utils/errorHandling");
 
 module.exports = (err, req, res, next) => {
   err.statusCode = err.statusCode || 500;
   err.message = err.message || "Internal Server Error";
+
   // MongoDB error
   if (err.name === "CastError") {
     const message = `Resource not found: ${req.path}`;
@@ -30,8 +32,6 @@ module.exports = (err, req, res, next) => {
     err = new ErrorHandler(message, 400);
   }
 
-  res.status(err.statusCode).json({
-    status: err.statusCode,
-    message: err.message,
-  });
+  // Send error response
+  return sendResponse(res, 0, err.statusCode, err.message);
 };

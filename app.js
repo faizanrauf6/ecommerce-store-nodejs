@@ -7,6 +7,8 @@ const ErrorHandler = require("./middlewares/error.js");
 const appRoutes = require("./routes/index");
 const cors = require("cors");
 const bodyParser = require("body-parser");
+const compression = require("compression");
+const consoleLogger = require("./config/logging.js");
 
 // ! Create app
 const app = express();
@@ -16,7 +18,7 @@ dotenv.config();
 
 // ! Handling uncaught exceptions
 process.on("uncaughtException", (err) => {
-  console.log("Server error: " + err.message);
+  consoleLogger.error("Server error: " + err.message);
   process.exit(1);
 });
 
@@ -61,7 +63,7 @@ app.use((err, req, res, next) => {
 });
 
 // ! limit repeated failed requests to auth endpoints
-if (config.env === "production") {
+if (process.env.NODE_ENV === "production") {
   app.use("/v1/auth", authLimiter);
 }
 
@@ -81,14 +83,14 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 // ! Starting Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server is starting on port: ${PORT}`);
+  consoleLogger.info(`Server is starting on port: ${PORT}`);
 });
 
 // ! Unhandled promise rejection
 app.use(ErrorHandler);
 
 process.on("unhandledRejection", (reason) => {
-  console.log("Server closed duce to" + reason);
+  consoleLogger.error("Server closed duce to" + reason);
   server.close(() => {
     process.exit(1);
   });
