@@ -14,9 +14,7 @@ const registerUser = catchAsyncErrors(async (req, res, next) => {
       #swagger.produces = ['application/json']
   */
   const { name, email, password, role = "user" } = req.body;
-  if (!name || !email || !password) {
-    return next(new ErrorHandler("Please fill all the fields", 400));
-  }
+
   // ! Check if user already exists
   const userExists = await UserModel.findOne({ email });
   if (userExists) {
@@ -54,9 +52,7 @@ const loginUser = catchAsyncErrors(async (req, res, next) => {
     }]
   */
   const { email, password } = req.body;
-  if (!email || !password) {
-    return next(new ErrorHandler("Please fill all the fields", 400));
-  }
+
   // ! Check if user exists
   const userExists = await UserModel.findOne({ email }).select("+password");
   if (!userExists) {
@@ -145,9 +141,7 @@ const forgotPassword = catchAsyncErrors(async (req, res, next) => {
     #swagger.produces = ['application/json']
   */
   const { email } = req.body;
-  if (!email) {
-    return next(new ErrorHandler("Please fill all the fields", 400));
-  }
+
   // ! Check if user exists
   const userExists = await UserModel.findOne({ email });
   if (!userExists) {
@@ -198,9 +192,6 @@ const resetPassword = catchAsyncErrors(async (req, res, next) => {
   const { password } = req.body;
   const token = req.params.token;
 
-  if (!password) {
-    return next(new ErrorHandler("Please fill all the fields", 400));
-  }
   // ! Check user by token
   const decoded = await validateToken(token);
   if (!decoded) {
@@ -238,9 +229,6 @@ const updatePassword = catchAsyncErrors(async (req, res, next) => {
   }]
   */
   const { currentPassword, newPassword } = req.body;
-  if (!currentPassword || !newPassword) {
-    return next(new ErrorHandler("Please fill all the fields", 400));
-  }
   let userExists = await UserModel.findById(req.user._id).select("+password");
   // ! Compare password
   const isPasswordMatched = await comparePassword(

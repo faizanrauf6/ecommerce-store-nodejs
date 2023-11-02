@@ -4,6 +4,24 @@ const UserModel = require("../models/user");
 const Order = require("../models/order");
 const { sendResponse } = require("../helpers/response");
 
+// ! Get User Profile /api/v1/user/profile
+const getUserProfile = catchAsyncErrors(async (req, res, next) => {
+  /* 
+      #swagger.tags = ['User']
+      #swagger.summary = 'Get User Profile.'
+      #swagger.consumes = ['application/json']
+      #swagger.produces = ['application/json']
+      #swagger.security = [{
+      BearerAuth: []
+    }]
+    */
+
+  // send response
+  return sendResponse(res, 1, 200, "User profile fetched successfully", {
+    user: req.user ? req.user : null,
+  });
+});
+
 // ! Update Profile /api/v1/user/update-profile
 const updateProfile = catchAsyncErrors(async (req, res, next) => {
   /* 
@@ -16,9 +34,7 @@ const updateProfile = catchAsyncErrors(async (req, res, next) => {
     }]
     */
   const { name, email } = req.body;
-  if (!name || !email) {
-    return next(new ErrorHandler("Please fill all the fields", 400));
-  }
+
   let userExists = await UserModel.findById(req.user._id);
   // ! Check if user exists
   if (!userExists) {
@@ -40,24 +56,6 @@ const updateProfile = catchAsyncErrors(async (req, res, next) => {
   return sendResponse(res, 1, 200, "Profile updated successfully");
 });
 
-// ! Get User Profile /api/v1/user/profile
-const getUserProfile = catchAsyncErrors(async (req, res, next) => {
-  /* 
-      #swagger.tags = ['User']
-      #swagger.summary = 'Get User Profile.'
-      #swagger.consumes = ['application/json']
-      #swagger.produces = ['application/json']
-      #swagger.security = [{
-      BearerAuth: []
-    }]
-    */
-
-  // send response
-  return sendResponse(res, 1, 200, "User profile fetched successfully", {
-    user: req.user ? req.user : null,
-  });
-});
-
 // ! Update Role /api/v1/user/update-role
 const updateRole = catchAsyncErrors(async (req, res, next) => {
   /* 
@@ -70,9 +68,7 @@ const updateRole = catchAsyncErrors(async (req, res, next) => {
     }]
     */
   const { role, email } = req.body;
-  if (!role || !email) {
-    return next(new ErrorHandler("Please fill all the fields", 400));
-  }
+
   if (req.user.email === email) {
     return next(new ErrorHandler("You can not change your role", 400));
   }
