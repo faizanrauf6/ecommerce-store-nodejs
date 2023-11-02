@@ -3,6 +3,7 @@ const ErrorHandler = require("../utils/errorHandling");
 const ProductModel = require("../models/product");
 const { default: slugify } = require("slugify");
 const CategoryModel = require("../models/category");
+const { sendResponse } = require("../helpers/response");
 
 // ! Create new product => /api/v1/product/new
 exports.newProduct = catchAsyncErrors(async (req, res, next) => {
@@ -32,7 +33,6 @@ exports.newProduct = catchAsyncErrors(async (req, res, next) => {
 
   // Check if the category exists
   const checkCategory = await CategoryModel.findById(category);
-
   if (!checkCategory) {
     return next(new ErrorHandler("Category not found", 404));
   }
@@ -58,12 +58,8 @@ exports.newProduct = catchAsyncErrors(async (req, res, next) => {
   checkCategory.products.push(product._id);
   await checkCategory.save();
 
-  // Return success response
-  res.status(201).json({
-    success: true,
-    message: "Product is created",
-    data: { product },
-  });
+  // send response
+  return sendResponse(res, 1, 201, "Product created successfully", product);
 });
 
 // ! Get all product => /api/v1/product/get-all-product
@@ -128,16 +124,22 @@ exports.getAllProducts = catchAsyncErrors(async (req, res, next) => {
     .skip(skip)
     .limit(limit);
 
-  res.status(200).json({
-    success: true,
-    message: "All products are found",
-    data: {
-      products,
-      page,
-      totalPages,
-      totalProducts: count,
-    },
-  });
+  let pagination = {
+    page,
+    totalPages,
+    totalProducts: count,
+  };
+
+  // send response
+  return sendResponse(
+    res,
+    1,
+    200,
+    products.length > 0 ? `Products found successfully` : `No products found`,
+    products,
+    null,
+    pagination
+  );
 });
 
 // ! Get product by slug => /api/v1/product/get-category/:slug
@@ -162,13 +164,8 @@ exports.getProduct = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("Product not found", 404));
   }
 
-  res.status(200).json({
-    success: true,
-    message: "Product is found",
-    data: {
-      product,
-    },
-  });
+  // send response
+  return sendResponse(res, 1, 200, "Product is found", product);
 });
 
 // ! Delete product => /api/v1/product/delete-product/:slug
@@ -192,7 +189,6 @@ exports.deleteProduct = catchAsyncErrors(async (req, res, next) => {
   const product = await ProductModel.findOneAndDelete({
     slug: req.params.slug,
   });
-
   if (!product) {
     return next(new ErrorHandler("Product not found", 404));
   }
@@ -203,10 +199,8 @@ exports.deleteProduct = catchAsyncErrors(async (req, res, next) => {
   });
   await category.save();
 
-  res.status(200).json({
-    success: true,
-    message: "Product is deleted",
-  });
+  // send response
+  return sendResponse(res, 1, 200, "Product is deleted");
 });
 
 // ! Update product => /api/v1/product/update-product/:slug
@@ -235,8 +229,6 @@ exports.updateProduct = catchAsyncErrors(async (req, res, next) => {
   */
   const { name, price, description, category, stock } = req.body;
   const product = await ProductModel.findOne({ slug: req.params.slug });
-  //   const slugifyName = ;
-
   if (!product) {
     return next(new ErrorHandler("Product not found", 404));
   }
@@ -263,10 +255,6 @@ exports.updateProduct = catchAsyncErrors(async (req, res, next) => {
     : product.slug;
   await product.save();
 
-  // Return success response
-  res.status(200).json({
-    success: true,
-    message: "Product is updated",
-    data: { product },
-  });
+  // send response
+  return sendResponse(res, 1, 200, "Product is updated", product);
 });

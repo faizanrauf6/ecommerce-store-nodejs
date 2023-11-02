@@ -5,6 +5,7 @@ const ProductModel = require("../models/product");
 const dotenv = require("dotenv");
 const PaymentSession = require("../models/payment");
 const consoleLogger = require("../config/logging");
+const { sendResponse } = require("../helpers/response");
 dotenv.config();
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
@@ -93,11 +94,9 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
     phone: phone,
   });
 
-  // ! Session created
-  res.json({
-    success: true,
-    message: "Checkout link send successfully",
-    data: { url: session.url },
+  // send response
+  return sendResponse(res, 200, true, "Checkout link send successfully", {
+    url: session.url,
   });
 });
 
@@ -148,10 +147,10 @@ async function handlePaymentFailure(session) {
     },
     { new: true }
   );
-
   // Additional actions for a failed payment
   // Notify the user about the failed payment, handle retries, etc.
 }
+
 // ! Stripe webhook
 exports.stripeWebhook = catchAsyncErrors(async (req, res, next) => {
   const signature = req.headers["stripe-signature"];
@@ -182,12 +181,9 @@ exports.stripeWebhook = catchAsyncErrors(async (req, res, next) => {
     default:
     // Handle other events or ignore them
   }
-
-  res.sendStatus(200);
 });
 
 // ! Get all orders => /api/v1/order/get-all
-
 exports.getAllOrders = catchAsyncErrors(async (req, res, next) => {
   /* 
         #swagger.tags = ['Order']
@@ -217,16 +213,18 @@ exports.getAllOrders = catchAsyncErrors(async (req, res, next) => {
       .populate("user", "name email")
       .populate("products.product", "name price -_id");
   }
-  res.json({
-    success: true,
-    message:
-      orders.length > 0 ? `Orders found successfully` : `No orders found`,
-    data: orders,
-  });
+
+  // send response
+  return sendResponse(
+    res,
+    1,
+    200,
+    orders.length > 0 ? `Orders found successfully` : `No orders found`,
+    orders
+  );
 });
 
 // ! Get single order => /api/v1/order/:id
-
 exports.getSingleOrder = catchAsyncErrors(async (req, res, next) => {
   /* 
         #swagger.tags = ['Order']
@@ -250,11 +248,12 @@ exports.getSingleOrder = catchAsyncErrors(async (req, res, next) => {
   if (!order) {
     return next(new ErrorHandler("Order not found", 404));
   }
-  res.json({ success: true, message: "Order found successfully", data: order });
+
+  // send response
+  return sendResponse(res, 1, 200, "Order found successfully", order);
 });
 
 // ! Update order => /api/v1/order/:id
-
 exports.updateOrder = catchAsyncErrors(async (req, res, next) => {
   /* 
         #swagger.tags = ['Order']
@@ -301,9 +300,7 @@ exports.updateOrder = catchAsyncErrors(async (req, res, next) => {
   )
     .populate("user", "name email")
     .populate("products.product", "name price -_id");
-  res.json({
-    success: true,
-    message: "Order update successfully",
-    data: order,
-  });
+
+  // send response
+  return sendResponse(res, 1, 200, "Order update successfully", order);
 });

@@ -3,8 +3,9 @@ const { generateToken, validateToken } = require("../config/jwt");
 const catchAsyncErrors = require("../middlewares/catchAsyncError");
 const ErrorHandler = require("../utils/errorHandling");
 const UserModel = require("../models/user");
+const { sendResponse } = require("../helpers/response");
 
-// ! Register User
+// ! Register User /api/v1/auth/register
 const registerUser = catchAsyncErrors(async (req, res, next) => {
   /* 
       #swagger.tags = ['Auth']
@@ -38,13 +39,10 @@ const registerUser = catchAsyncErrors(async (req, res, next) => {
   });
 
   // send response
-  res.status(201).json({
-    success: true,
-    message: "User created successfully",
-  });
+  return sendResponse(res, 1, 201, "User created successfully");
 });
 
-// ! Login User
+// ! Login User /api/v1/auth/login
 const loginUser = catchAsyncErrors(async (req, res, next) => {
   /* 
     #swagger.tags = ['Auth']
@@ -82,16 +80,10 @@ const loginUser = catchAsyncErrors(async (req, res, next) => {
     httpOnly: true,
   });
 
-  res.status(200).json({
-    success: true,
-    message: "User logged in successfully",
-    data: {
-      token,
-    },
-  });
+  return sendResponse(res, 1, 200, "User logged in successfully", null, token);
 });
 
-// ! Logout User
+// ! Logout User /api/v1/auth/logout
 const logoutUser = catchAsyncErrors(async (req, res, next) => {
   /* 
     #swagger.tags = ['Auth']
@@ -106,13 +98,12 @@ const logoutUser = catchAsyncErrors(async (req, res, next) => {
     expires: new Date(Date.now()),
     httpOnly: true,
   });
-  res.status(200).json({
-    success: true,
-    message: "User logged out successfully",
-  });
+
+  // send response
+  return sendResponse(res, 1, 200, "User logged out successfully");
 });
 
-// ! Refresh Token
+// ! Refresh Token /api/v1/auth/refresh-token
 const refreshToken = catchAsyncErrors(async (req, res, next) => {
   /* 
     #swagger.tags = ['Auth']
@@ -123,7 +114,6 @@ const refreshToken = catchAsyncErrors(async (req, res, next) => {
     BearerAuth: []
   }]
   */
-  const token = req.cookies.token;
 
   try {
     const newToken = await generateToken(req.user._id);
@@ -131,19 +121,22 @@ const refreshToken = catchAsyncErrors(async (req, res, next) => {
       expires: new Date(Date.now() + 24 * 60 * 60 * 1000), // * 1 day
       httpOnly: true,
     });
-    res.status(200).json({
-      success: true,
-      message: "Token refreshed successfully",
-      data: {
-        token: newToken,
-      },
-    });
+
+    // send response
+    return sendResponse(
+      res,
+      1,
+      200,
+      "Token refreshed successfully",
+      null,
+      newToken
+    );
   } catch (error) {
     return next(new ErrorHandler("You are not authorized", 401));
   }
 });
 
-// ! Forgot Password
+// ! Forgot Password /api/v1/auth/forgot-password
 const forgotPassword = catchAsyncErrors(async (req, res, next) => {
   /* 
     #swagger.tags = ['Auth']
@@ -169,18 +162,19 @@ const forgotPassword = catchAsyncErrors(async (req, res, next) => {
   // ! Add reset password token to user
   userExists.resetPasswordToken = token;
   await userExists.save();
+
   // send response
-  res.status(200).json({
-    success: true,
-    message: "Reset password url sent successfully",
-    data: {
-      resetUrl,
-      token: token,
-    },
-  });
+  return sendResponse(
+    res,
+    1,
+    200,
+    "Reset password url sent successfully",
+    resetUrl,
+    token
+  );
 });
 
-// ! Reset Password
+// ! Reset Password /api/v1/auth/reset-password/:token
 const resetPassword = catchAsyncErrors(async (req, res, next) => {
   /* 
     #swagger.tags = ['Auth']
@@ -231,13 +225,10 @@ const resetPassword = catchAsyncErrors(async (req, res, next) => {
   await userExists.save();
 
   // send response
-  res.status(200).json({
-    success: true,
-    message: "Password reset successfully",
-  });
+  return sendResponse(res, 1, 200, "Password reset successfully");
 });
 
-// ! Update Password
+// ! Update Password /api/v1/auth/update-password
 const updatePassword = catchAsyncErrors(async (req, res, next) => {
   /* 
     #swagger.tags = ['Auth']
@@ -267,10 +258,7 @@ const updatePassword = catchAsyncErrors(async (req, res, next) => {
   await userExists.save();
 
   // send response
-  res.status(200).json({
-    success: true,
-    message: "Password updated successfully",
-  });
+  return sendResponse(res, 1, 200, "Password updated successfully");
 });
 
 module.exports = {

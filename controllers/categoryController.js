@@ -2,6 +2,7 @@ const catchAsyncErrors = require("../middlewares/catchAsyncError");
 const ErrorHandler = require("../utils/errorHandling");
 const CategoryModel = require("../models/category");
 const { default: slugify } = require("slugify");
+const { sendResponse } = require("../helpers/response");
 
 // ! Create new category => /api/v1/category/new
 exports.newCategory = catchAsyncErrors(async (req, res, next) => {
@@ -39,9 +40,10 @@ exports.newCategory = catchAsyncErrors(async (req, res, next) => {
   }
   let fileUrl = "";
   if (!req.file) {
-    return res.status(400).json({ message: "No file uploaded." });
+    return next(new ErrorHandler("No file uploaded.", 400));
   }
   fileUrl = req.file.path;
+
   // ! Create new category
   const category = await CategoryModel.create({
     name,
@@ -50,14 +52,8 @@ exports.newCategory = catchAsyncErrors(async (req, res, next) => {
     slug: slugifyName,
   });
 
-  // ! Return response
-  res.status(201).json({
-    success: true,
-    message: "Category is created",
-    data: {
-      category,
-    },
-  });
+  // send response
+  return sendResponse(res, 1, 201, "Category created successfully", category);
 });
 
 // ! Get all categories => /api/v1/category/get-all-categories
@@ -70,13 +66,8 @@ exports.getAllCategories = catchAsyncErrors(async (req, res, next) => {
   */
   const categories = await CategoryModel.find();
 
-  res.status(200).json({
-    success: true,
-    message: "All categories are found",
-    data: {
-      categories,
-    },
-  });
+  // send response
+  return sendResponse(res, 1, 200, "All categories are found", categories);
 });
 
 // ! Get category by slug => /api/v1/category/get-category/:slug
@@ -101,13 +92,8 @@ exports.getCategory = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("Category not found", 404));
   }
 
-  res.status(200).json({
-    success: true,
-    message: "Category is found",
-    data: {
-      category,
-    },
-  });
+  // send response
+  return sendResponse(res, 1, 200, "Category is found", category);
 });
 
 // ! Delete category => /api/v1/category/delete-category/:slug
@@ -145,10 +131,8 @@ exports.deleteCategory = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("Category not found", 404));
   }
 
-  res.status(200).json({
-    success: true,
-    message: "Category is deleted",
-  });
+  // send response
+  return sendResponse(res, 1, 200, "Category is deleted");
 });
 
 // ! Update category => /api/v1/category/update-category/:slug
@@ -220,11 +204,6 @@ exports.updateCategory = catchAsyncErrors(async (req, res, next) => {
     }
   );
 
-  res.status(200).json({
-    success: true,
-    message: "Category is updated",
-    data: {
-      category,
-    },
-  });
+  // send response
+  return sendResponse(res, 1, 200, "Category is updated", category);
 });

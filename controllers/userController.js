@@ -2,8 +2,9 @@ const catchAsyncErrors = require("../middlewares/catchAsyncError");
 const ErrorHandler = require("../utils/errorHandling");
 const UserModel = require("../models/user");
 const Order = require("../models/order");
+const { sendResponse } = require("../helpers/response");
 
-// ! Update Profile
+// ! Update Profile /api/v1/user/update-profile
 const updateProfile = catchAsyncErrors(async (req, res, next) => {
   /* 
       #swagger.tags = ['User']
@@ -36,13 +37,10 @@ const updateProfile = catchAsyncErrors(async (req, res, next) => {
   await userExists.save();
 
   // send response
-  res.status(200).json({
-    success: true,
-    message: "Profile updated successfully",
-  });
+  return sendResponse(res, 1, 200, "Profile updated successfully");
 });
 
-// ! Get User Profile
+// ! Get User Profile /api/v1/user/profile
 const getUserProfile = catchAsyncErrors(async (req, res, next) => {
   /* 
       #swagger.tags = ['User']
@@ -53,16 +51,14 @@ const getUserProfile = catchAsyncErrors(async (req, res, next) => {
       BearerAuth: []
     }]
     */
-  res.status(200).json({
-    success: true,
-    message: "User profile fetched successfully",
-    data: {
-      user: req.user,
-    },
+
+  // send response
+  return sendResponse(res, 1, 200, "User profile fetched successfully", {
+    user: req.user ? req.user : null,
   });
 });
 
-// ! Update Role
+// ! Update Role /api/v1/user/update-role
 const updateRole = catchAsyncErrors(async (req, res, next) => {
   /* 
       #swagger.tags = ['User']
@@ -90,13 +86,10 @@ const updateRole = catchAsyncErrors(async (req, res, next) => {
   await userExists.save();
 
   // send response
-  res.status(200).json({
-    success: true,
-    message: "Role updated successfully",
-  });
+  return sendResponse(res, 1, 200, "Role updated successfully");
 });
 
-// ! Get All Users
+// ! Get All Users /api/v1/user/all-users
 const getAllUsers = catchAsyncErrors(async (req, res, next) => {
   /*
       #swagger.tags = ['User']
@@ -130,6 +123,8 @@ const getAllUsers = catchAsyncErrors(async (req, res, next) => {
   // Define default values for page and limit
   const pageNum = page ? parseInt(page) : 1;
   const limitNum = limit ? parseInt(limit) : 10; // Adjust this limit to your preference.
+  // Calculate the skip value for pagination
+  const skip = (pageNum - 1) * limitNum;
 
   // Define a filter object to filter users by email (if provided)
   const filter = {};
@@ -139,29 +134,32 @@ const getAllUsers = catchAsyncErrors(async (req, res, next) => {
 
   // Query the database using Mongoose to fetch users based on the filter and apply pagination.
   const users = await UserModel.find(filter)
-    .skip((pageNum - 1) * limitNum)
+    .skip(skip)
     .limit(limitNum)
     .select("-__v");
 
   // Count the total number of users matching the filter for pagination information.
-  const totalUsers = await UserModel.countDocuments(filter);
+  const count = await UserModel.countDocuments(filter);
+  const totalPages = Math.ceil(count / limitNum);
 
-  // Send the response with pagination information and user data.
-  res.status(200).json({
-    success: true,
-    message: "Users fetched successfully",
-    data: {
-      users,
-      pagination: {
-        page: pageNum,
-        limit: limitNum,
-        totalUsers,
-      },
-    },
-  });
+  let pagination = {
+    page: pageNum,
+    totalPages,
+    totalUsers: count,
+  };
+
+  // send response
+  return sendResponse(
+    res,
+    1,
+    200,
+    users.length > 0 ? "Users fetched successfully" : "No user found",
+    users,
+    pagination
+  );
 });
 
-// ! Get User Orders
+// ! Get User Orders /api/v1/user/orders
 const getUserOrders = catchAsyncErrors(async (req, res) => {
   /*
       #swagger.tags = ['User']
@@ -179,15 +177,14 @@ const getUserOrders = catchAsyncErrors(async (req, res) => {
     user: userId,
   });
 
-  // ! Send Response
-  res.status(200).json({
-    message: `${
-      orders.length > 0 ? "Orders found successfully" : "No order found"
-    }`,
-    data: {
-      orders,
-    },
-  });
+  // send response
+  return sendResponse(
+    res,
+    1,
+    200,
+    orders.length > 0 ? "Orders found successfully" : "No order found",
+    orders
+  );
 });
 
 module.exports = {
