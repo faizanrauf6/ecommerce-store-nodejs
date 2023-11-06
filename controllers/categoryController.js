@@ -24,9 +24,6 @@ exports.newCategory = catchAsyncErrors(async (req, res, next) => {
   */
   const { name, description } = req.body;
 
-  if (!name || !description) {
-    return next(new ErrorHandler("Please provide all fields", 400));
-  }
   let slugifyName = slugify(name, {
     lower: true,
     strict: true,
@@ -160,9 +157,7 @@ exports.updateCategory = catchAsyncErrors(async (req, res, next) => {
         }
   */
   let { name, description } = req.body;
-  if (!name || !description) {
-    return next(new ErrorHandler("Please provide all fields", 400));
-  }
+
   let category = await CategoryModel.findOne({ slug: req.params.slug });
 
   if (!category) {

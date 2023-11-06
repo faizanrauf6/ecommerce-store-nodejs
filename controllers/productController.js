@@ -18,11 +18,6 @@ exports.newProduct = catchAsyncErrors(async (req, res, next) => {
   */
   const { name, price, description, category, stock } = req.body;
 
-  // Check for required fields
-  if (!name || !price || !description || !category || !stock) {
-    return next(new ErrorHandler("Please provide all fields", 400));
-  }
-
   // Ensure the product name is unique by slugifying it
   const slugifyName = slugify(name, { lower: true, strict: true });
   const existingProduct = await ProductModel.findOne({ slug: slugifyName });

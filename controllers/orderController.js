@@ -31,11 +31,6 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
   const { products, address, phone } = req.body;
   const userId = req.user._id;
 
-  // ! Check validation
-  if (!products || !address || !phone) {
-    return next(new ErrorHandler("Please provide all fields", 400));
-  }
-
   let allProducts = await ProductModel.find({
     _id: { $in: products.map((product) => product.product) },
   });
@@ -280,9 +275,7 @@ exports.updateOrder = catchAsyncErrors(async (req, res, next) => {
         }
   */
   let { status } = req.body;
-  if (!status) {
-    return next(new ErrorHandler("Please provide status", 400));
-  }
+
   let order = await OrderModel.findById(req.params.id);
   if (!order) {
     return next(new ErrorHandler("Order not found", 404));
