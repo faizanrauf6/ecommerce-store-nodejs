@@ -71,11 +71,6 @@ const loginUser = catchAsyncErrors(async (req, res, next) => {
   // ! Generate token
   const token = await generateToken(userExists._id);
   // send response
-  res.cookie("token", token, {
-    expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
-    httpOnly: true,
-  });
-
   return sendResponse(res, 1, 200, "User logged in successfully", null, token);
 });
 

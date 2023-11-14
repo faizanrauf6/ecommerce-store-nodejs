@@ -3,7 +3,7 @@ const UserModel = require("../models/user");
 const { sendResponse } = require("../helpers/response");
 
 const authenticated = async (req, res, next) => {
-  const token = req.cookies.token;
+  const token = req.headers.authorization?.split(" ")[1];
   if (!token) {
     return sendResponse(res, 0, 401, "You are not authorized or token expired");
   }
