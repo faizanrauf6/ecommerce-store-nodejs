@@ -70,8 +70,24 @@ const loginUser = catchAsyncErrors(async (req, res, next) => {
 
   // ! Generate token
   const token = await generateToken(userExists._id);
+
+  // ! Create a sanitized user object without the password
+  const sanitizedUser = {
+    _id: userExists._id,
+    email: userExists.email,
+    role: userExists.role,
+    avatar: userExists.avatar,
+  };
+
   // send response
-  return sendResponse(res, 1, 200, "User logged in successfully", null, token);
+  return sendResponse(
+    res,
+    1,
+    200,
+    "User logged in successfully",
+    sanitizedUser,
+    token
+  );
 });
 
 // ! Logout User /api/v1/auth/logout
