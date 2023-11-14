@@ -5,3 +5,5 @@
 package-lock.json
 
 /.clinic
+
+node_trace.*.log
