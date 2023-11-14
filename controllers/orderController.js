@@ -40,12 +40,19 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("Invalid product found", 404));
   }
 
-  // ! Calculate total price
+  // ! Check stock and calculate total price
   let total = 0;
   products.forEach((product) => {
-    total +=
-      allProducts.find((p) => p._id.toString() === product.product.toString())
-        .price * product.quantity;
+    const foundProduct = allProducts.find(
+      (p) => p._id.toString() === product.product.toString()
+    );
+    if (foundProduct.stock < product.quantity) {
+      return next(
+        new ErrorHandler("Insufficient stock for some products", 400)
+      );
+    }
+
+    total += foundProduct.price * product.quantity;
   });
 
   // ! Create Order
@@ -90,7 +97,7 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
   });
 
   // send response
-  return sendResponse(res, 200, true, "Checkout link send successfully", {
+  return sendResponse(res, 200, true, "Checkout link sent successfully", {
     url: session.url,
   });
 });
